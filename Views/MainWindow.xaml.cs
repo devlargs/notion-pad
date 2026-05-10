@@ -77,8 +77,9 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnLoaded(object sender, RoutedEventArgs e)
+    private async void OnLoaded(object sender, RoutedEventArgs e)
     {
+        await App.Updater.CheckAndApplyAsync();
         if (!App.Store.Data.Settings.IsConfigured)
         {
             OpenSettings(required: true);

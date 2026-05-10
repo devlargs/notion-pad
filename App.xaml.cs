@@ -9,6 +9,7 @@ public partial class App : Application
     public static LocalStore Store { get; private set; } = null!;
     public static NotionClient Notion { get; private set; } = null!;
     public static SyncQueue Sync { get; private set; } = null!;
+    public static UpdaterService Updater { get; private set; } = null!;
     public static HttpClient Http { get; } = new HttpClient();
 
     protected override void OnStartup(StartupEventArgs e)
@@ -18,6 +19,7 @@ public partial class App : Application
         Store.Load();
         Notion = new NotionClient(Http, () => Store.Data.Settings);
         Sync = new SyncQueue(Store, Notion);
+        Updater = new UpdaterService(Http);
     }
 
     protected override void OnExit(ExitEventArgs e)
