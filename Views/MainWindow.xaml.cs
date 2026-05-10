@@ -161,9 +161,38 @@ public partial class MainWindow : Window
 
     private void OnEditorTextChanged(object sender, TextChangedEventArgs e)
     {
+        UpdateCharCount();
+        UpdateCaretStatus();
         if (_suppressEditorEvents || _activeNote is null) return;
         _autosaveTimer.Stop();
         _autosaveTimer.Start();
+    }
+
+    private void OnEditorSelectionChanged(object sender, RoutedEventArgs e)
+    {
+        UpdateCaretStatus();
+    }
+
+    private void UpdateCharCount()
+    {
+        CharCountText.Text = $"{EditorBox.Text.Length} character{(EditorBox.Text.Length == 1 ? string.Empty : "s")}";
+    }
+
+    private void UpdateCaretStatus()
+    {
+        var text = EditorBox.Text;
+        var caret = EditorBox.CaretIndex;
+        if (caret > text.Length) caret = text.Length;
+        var line = 1;
+        var lastBreak = -1;
+        for (var i = 0; i < caret; i++)
+        {
+            if (text[i] != '\n') continue;
+            line++;
+            lastBreak = i;
+        }
+        var col = caret - lastBreak;
+        LnColText.Text = $"Ln {line}, Col {col}";
     }
 
     private void OnAutosaveTick(object? sender, EventArgs e)
