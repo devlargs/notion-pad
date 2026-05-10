@@ -58,13 +58,53 @@ Framework-dependent (small, requires .NET 8 Desktop Runtime on the target machin
 dotnet publish -c Release -r win-x64 --self-contained false
 ```
 
-Self-contained (larger, runs on any Win10/11 box):
+Self-contained single-file (mirrors what CI publishes — runs on any Win10/11 box):
 
 ```powershell
-dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true
+dotnet publish -c Release -r win-x64 --self-contained true `
+  -p:PublishSingleFile=true `
+  -p:IncludeNativeLibrariesForSelfExtract=true `
+  -p:EnableCompressionInSingleFile=true `
+  -p:Version=1.2.3
 ```
 
 Output lands in `bin/Release/net8.0-windows/win-x64/publish/NotionPad.exe`.
+
+## Releasing
+
+Releases are produced by `.github/workflows/release.yml` whenever you push a `vMAJOR.MINOR.PATCH` tag:
+
+```powershell
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+The workflow:
+
+1. Checks out the repo and installs .NET 8.
+2. Extracts the version from the tag (strips the leading `v`).
+3. Publishes a self-contained, single-file, compressed `NotionPad.exe` stamped with that version.
+4. Creates a GitHub Release named `Notion Pad vX.Y.Z` with auto-generated notes and uploads the exe as the only asset.
+
+The tag **must** match `v\d+\.\d+\.\d+` exactly — pre-release suffixes (`v1.0.0-beta`) are intentionally rejected so the auto-updater's `Version.TryParse` never sees a tag it can't compare.
+
+## Auto-update
+
+On every launch the app calls `UpdaterService.CheckAndApplyAsync` (wired in `MainWindow.OnLoaded`):
+
+1. Hits `GET https://api.github.com/repos/devlargs/notion-pad/releases/latest`.
+2. Compares the release's `tag_name` against the running assembly's `Version`.
+3. If the release is newer, streams the `NotionPad.exe` asset to `%TEMP%\NotionPad-update-<version>.exe`.
+4. Writes a one-shot `.cmd` script to `%TEMP%` that waits ~2 s, `move /Y`s the new exe over the running one (retrying until the file handle is released), and relaunches it.
+5. Shows a small "will restart to apply update" message box, then `Application.Shutdown()`s. The script then completes the swap and the app reopens on the new version.
+
+Safety gates in `UpdaterService.ShouldRun()`:
+
+- `#if DEBUG` → never runs in debug builds (so `dotnet run` is unaffected).
+- `Version.Major == 0` → never runs when the assembly version is still the local `0.0.0` placeholder.
+- Exe path contains `\bin\` → never runs when launched out of a build output folder.
+
+Failures (no network, GitHub rate-limit, JSON shape change, etc.) are caught and swallowed silently — an update problem must never block the app from launching.
 
 ## How it works
 
