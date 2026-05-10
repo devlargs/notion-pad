@@ -54,7 +54,8 @@ public partial class MainWindow : Window
             HookNote(note);
             _notes.Add(note);
         }
-        if (_notes.Count > 0) NotesList.SelectedIndex = 0;
+        if (_notes.Count > 0) TabsList.SelectedIndex = 0;
+        else SyncEditorWithSelection();
     }
 
     private void HookNote(Note note)
@@ -69,7 +70,7 @@ public partial class MainWindow : Window
         if (note != _activeNote) return;
         if (e.PropertyName is nameof(Note.SyncState) or nameof(Note.LastError) or nameof(Note.Title))
         {
-            Dispatcher.BeginInvoke(new Action(() => RefreshHeader(note)));
+            Dispatcher.BeginInvoke(new Action(() => RefreshStatus(note)));
         }
     }
 
@@ -89,53 +90,55 @@ public partial class MainWindow : Window
         App.Store.Data.Notes.Insert(0, note);
         App.Store.Persist();
         _notes.Insert(0, note);
-        NotesList.SelectedItem = note;
+        TabsList.SelectedItem = note;
         EditorBox.Focus();
     }
 
     private void OnNoteSelected(object sender, SelectionChangedEventArgs e)
     {
         FlushPendingAutosave();
-        _activeNote = NotesList.SelectedItem as Note;
+        SyncEditorWithSelection();
+    }
+
+    private void SyncEditorWithSelection()
+    {
+        _activeNote = TabsList.SelectedItem as Note;
         _suppressEditorEvents = true;
         if (_activeNote is null)
         {
             EditorBox.Text = string.Empty;
             EditorBox.IsEnabled = false;
             EmptyHint.Visibility = Visibility.Visible;
-            DeleteButton.IsEnabled = false;
-            TitleLabel.Text = "No note selected";
-            StateDot.Fill = (Brush)Application.Current.Resources["MutedBrush"];
-            StateText.Text = string.Empty;
-            RetryButton.Visibility = Visibility.Collapsed;
+            ResetStatus();
         }
         else
         {
             EditorBox.Text = _activeNote.Body;
             EditorBox.IsEnabled = true;
             EmptyHint.Visibility = Visibility.Collapsed;
-            DeleteButton.IsEnabled = true;
-            RefreshHeader(_activeNote);
+            EditorBox.CaretIndex = 0;
+            RefreshStatus(_activeNote);
+            UpdateCaretStatus();
+            UpdateCharCount();
         }
         _suppressEditorEvents = false;
     }
 
-    private void RefreshHeader(Note note)
+    private void ResetStatus()
     {
-        TitleLabel.Text = string.IsNullOrWhiteSpace(note.Title) ? "Untitled" : note.Title;
-        StateDot.Fill = (Brush)(Application.Current.Resources[StateBrushKey(note.SyncState)] ?? Brushes.Gray);
-        StateText.Text = StateLabel(note.SyncState);
-        var isError = note.SyncState == SyncState.Error;
-        RetryButton.Visibility = isError ? Visibility.Visible : Visibility.Collapsed;
-        CopyErrorButton.Visibility = isError ? Visibility.Visible : Visibility.Collapsed;
-        ErrorBanner.Visibility = isError ? Visibility.Visible : Visibility.Collapsed;
-        ErrorText.Text = note.LastError ?? string.Empty;
+        LnColText.Text = "Ln 1, Col 1";
+        CharCountText.Text = "0 characters";
+        StateDot.Fill = (Brush)Application.Current.Resources["MutedBrush"];
+        StateText.Text = "Idle";
+        StateText.ToolTip = null;
     }
 
-    private void OnCopyError(object sender, RoutedEventArgs e)
+    private void RefreshStatus(Note note)
     {
-        if (_activeNote?.LastError is null) return;
-        Clipboard.SetText(_activeNote.LastError);
+        StateDot.Fill = (Brush)(Application.Current.Resources[StateBrushKey(note.SyncState)] ?? Brushes.Gray);
+        StateText.Text = StateLabel(note.SyncState);
+        StateText.ToolTip = note.SyncState == SyncState.Error ? note.LastError : null;
+        Title = string.IsNullOrWhiteSpace(note.Title) ? "Notion Pad" : $"{note.Title} — Notion Pad";
     }
 
     private static string StateBrushKey(SyncState state) => state switch
