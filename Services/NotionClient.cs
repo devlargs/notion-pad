@@ -146,24 +146,36 @@ public class NotionClient
     {
         var result = new List<object>();
         if (string.IsNullOrEmpty(body)) return result;
-        var paragraphs = System.Text.RegularExpressions.Regex.Split(body, @"\r?\n\r?\n+");
-        foreach (var raw in paragraphs)
+        var lines = body.Replace("\r\n", "\n").Split('\n');
+        foreach (var line in lines)
         {
-            var paragraph = raw.Replace("\r\n", " ").Replace('\n', ' ').Trim();
-            if (paragraph.Length == 0) continue;
-            for (var i = 0; i < paragraph.Length; i += BlockCharLimit)
+            if (line.Length == 0)
             {
-                var piece = paragraph.Substring(i, Math.Min(BlockCharLimit, paragraph.Length - i));
-                result.Add(new
-                {
-                    @object = "block",
-                    type = "paragraph",
-                    paragraph = new { rich_text = new[] { new { type = "text", text = new { content = piece } } } }
-                });
+                result.Add(EmptyParagraph());
+                continue;
             }
+            var richText = new List<object>();
+            for (var i = 0; i < line.Length; i += BlockCharLimit)
+            {
+                var piece = line.Substring(i, Math.Min(BlockCharLimit, line.Length - i));
+                richText.Add(new { type = "text", text = new { content = piece } });
+            }
+            result.Add(new
+            {
+                @object = "block",
+                type = "paragraph",
+                paragraph = new { rich_text = richText }
+            });
         }
         return result;
     }
+
+    private static object EmptyParagraph() => new
+    {
+        @object = "block",
+        type = "paragraph",
+        paragraph = new { rich_text = Array.Empty<object>() }
+    };
 
     private HttpRequestMessage BuildRequest(HttpMethod method, string path, object? body = null)
     {
