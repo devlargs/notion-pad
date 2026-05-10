@@ -12,6 +12,9 @@ namespace NotionPad.Views;
 
 public partial class MainWindow : Window
 {
+    private const double DefaultFontSize = 14d;
+    private const double MinFontSize = 9d;
+    private const double MaxFontSize = 36d;
     private static readonly TimeSpan AutosaveDelay = TimeSpan.FromMilliseconds(1500);
 
     private readonly ObservableCollection<Note> _notes = new();
@@ -283,6 +286,47 @@ public partial class MainWindow : Window
     {
         var dialog = new SettingsWindow(required) { Owner = this };
         dialog.ShowDialog();
+    }
+
+    private void OnExit(object sender, RoutedEventArgs e)
+    {
+        Close();
+    }
+
+    private void OnToggleWordWrap(object sender, RoutedEventArgs e)
+    {
+        EditorBox.TextWrapping = WordWrapMenuItem.IsChecked ? TextWrapping.Wrap : TextWrapping.NoWrap;
+        EditorBox.HorizontalScrollBarVisibility = WordWrapMenuItem.IsChecked
+            ? ScrollBarVisibility.Disabled
+            : ScrollBarVisibility.Auto;
+    }
+
+    private void OnZoomIn(object sender, RoutedEventArgs e) => OnZoomInGesture();
+    private void OnZoomOut(object sender, RoutedEventArgs e) => OnZoomOutGesture();
+    private void OnZoomReset(object sender, RoutedEventArgs e) => OnZoomResetGesture();
+
+    private void OnZoomInGesture()
+    {
+        EditorBox.FontSize = Math.Min(MaxFontSize, EditorBox.FontSize + 1);
+        UpdateZoomText();
+    }
+
+    private void OnZoomOutGesture()
+    {
+        EditorBox.FontSize = Math.Max(MinFontSize, EditorBox.FontSize - 1);
+        UpdateZoomText();
+    }
+
+    private void OnZoomResetGesture()
+    {
+        EditorBox.FontSize = DefaultFontSize;
+        UpdateZoomText();
+    }
+
+    private void UpdateZoomText()
+    {
+        var percent = (int)Math.Round(EditorBox.FontSize / DefaultFontSize * 100d);
+        ZoomText.Text = $"{percent}%";
     }
 
     protected override void OnClosing(CancelEventArgs e)
