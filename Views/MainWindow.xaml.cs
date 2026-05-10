@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using NotionPad.Models;
@@ -24,8 +25,23 @@ public partial class MainWindow : Window
         _autosaveTimer = new DispatcherTimer { Interval = AutosaveDelay };
         _autosaveTimer.Tick += OnAutosaveTick;
 
-        NotesList.ItemsSource = _notes;
+        TabsList.ItemsSource = _notes;
         LoadNotes();
+
+        InputBindings.Add(new KeyBinding(new ActionCommand(() => OnCreateNote(this, new RoutedEventArgs())),
+            new KeyGesture(Key.T, ModifierKeys.Control)));
+        InputBindings.Add(new KeyBinding(new ActionCommand(() => OnCloseActiveTab(this, new RoutedEventArgs())),
+            new KeyGesture(Key.W, ModifierKeys.Control)));
+        InputBindings.Add(new KeyBinding(new ActionCommand(OnZoomInGesture),
+            new KeyGesture(Key.OemPlus, ModifierKeys.Control)));
+        InputBindings.Add(new KeyBinding(new ActionCommand(OnZoomInGesture),
+            new KeyGesture(Key.Add, ModifierKeys.Control)));
+        InputBindings.Add(new KeyBinding(new ActionCommand(OnZoomOutGesture),
+            new KeyGesture(Key.OemMinus, ModifierKeys.Control)));
+        InputBindings.Add(new KeyBinding(new ActionCommand(OnZoomOutGesture),
+            new KeyGesture(Key.Subtract, ModifierKeys.Control)));
+        InputBindings.Add(new KeyBinding(new ActionCommand(OnZoomResetGesture),
+            new KeyGesture(Key.D0, ModifierKeys.Control)));
 
         Loaded += OnLoaded;
     }
@@ -227,5 +243,18 @@ public partial class MainWindow : Window
         FlushPendingAutosave();
         App.Store.FlushNow();
         base.OnClosing(e);
+    }
+}
+
+internal sealed class ActionCommand : ICommand
+{
+    private readonly Action _action;
+    public ActionCommand(Action action) => _action = action;
+    public bool CanExecute(object? parameter) => true;
+    public void Execute(object? parameter) => _action();
+    public event EventHandler? CanExecuteChanged
+    {
+        add { }
+        remove { }
     }
 }
