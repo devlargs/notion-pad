@@ -1,0 +1,47 @@
+<Window x:Class="NotionPad.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Notion settings"
+        Width="480" SizeToContent="Height"
+        ResizeMode="NoResize"
+        Background="{StaticResource PanelBrush}"
+        WindowStartupLocation="CenterOwner">
+  <Grid Margin="22">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <TextBlock Grid.Row="0" Text="Connect to Notion" FontSize="14" FontWeight="SemiBold" />
+    <TextBlock Grid.Row="1" Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,4,0,14"
+               Text="Create an internal integration at notion.so/my-integrations, share your &quot;Notion Pad&quot; database with it, then paste the secret and database ID below." />
+
+    <TextBlock Grid.Row="2" Style="{StaticResource MutedText}" Text="Integration token" Margin="0,0,0,4" />
+    <PasswordBox x:Name="TokenBox" Grid.Row="3" Style="{StaticResource DarkPasswordBox}"
+                 PasswordChanged="OnFieldChanged" Margin="0,0,0,12" />
+
+    <TextBlock Grid.Row="4" Style="{StaticResource MutedText}" Text="Database ID" Margin="0,0,0,4" />
+    <TextBox x:Name="DatabaseBox" Grid.Row="5" Style="{StaticResource DarkTextBox}"
+             TextChanged="OnFieldChanged" Margin="0,0,0,14" />
+
+    <Grid Grid.Row="6" Margin="0,0,0,14">
+      <Button x:Name="TestButton" Content="Test connection"
+              Style="{StaticResource GhostButton}" Foreground="{StaticResource AccentBrush}"
+              HorizontalAlignment="Left" Click="OnTest" />
+      <TextBlock x:Name="TestResult" HorizontalAlignment="Right" VerticalAlignment="Center"
+                 Style="{StaticResource MutedText}" TextTrimming="CharacterEllipsis" MaxWidth="260" />
+    </Grid>
+
+    <StackPanel Grid.Row="7" Orientation="Horizontal" HorizontalAlignment="Right">
+      <Button x:Name="CancelButton" Content="Cancel" Style="{StaticResource GhostButton}"
+              Margin="0,0,8,0" Click="OnCancel" />
+      <Button x:Name="SaveButton" Content="Save" Style="{StaticResource FlatButton}" Click="OnSave" />
+    </StackPanel>
+  </Grid>
+</Window>
