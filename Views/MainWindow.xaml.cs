@@ -219,25 +219,40 @@ public partial class MainWindow : Window
         var currentIndex = _notes.IndexOf(note);
         if (currentIndex <= 0) return;
         _notes.Move(currentIndex, 0);
-        NotesList.SelectedItem = note;
+        TabsList.SelectedItem = note;
     }
 
-    private async void OnDeleteNote(object sender, RoutedEventArgs e)
+    private void OnCloseTab(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn) return;
+        if (btn.Tag is not string id) return;
+        var note = _notes.FirstOrDefault(n => n.Id == id);
+        if (note is null) return;
+        CloseNote(note);
+    }
+
+    private void OnCloseActiveTab(object sender, RoutedEventArgs e)
     {
         if (_activeNote is null) return;
+        CloseNote(_activeNote);
+    }
+
+    private async void CloseNote(Note note)
+    {
         var confirm = MessageBox.Show(
             this,
-            "Delete this note? It will also be archived in Notion.",
-            "Delete note",
+            "Close this note? It will be deleted locally and archived in Notion.",
+            "Close note",
             MessageBoxButton.OKCancel,
             MessageBoxImage.Warning);
         if (confirm != MessageBoxResult.OK) return;
 
-        var note = _activeNote;
         _autosaveTimer.Stop();
+        var wasActive = note == _activeNote;
         _notes.Remove(note);
         App.Store.Data.Notes.Remove(note);
         App.Store.Persist();
+        if (wasActive) SyncEditorWithSelection();
 
         if (!string.IsNullOrEmpty(note.NotionPageId) && App.Store.Data.Settings.IsConfigured)
         {
