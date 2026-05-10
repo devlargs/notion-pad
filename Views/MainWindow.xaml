@@ -5,6 +5,7 @@
         Title="Notion Pad"
         Width="1100" Height="720" MinWidth="720" MinHeight="480"
         Background="{StaticResource BgBrush}"
+        Icon="/notepad.png"
         WindowStartupLocation="CenterScreen">
   <Window.Resources>
     <views:SyncStateToBrushConverter x:Key="StateBrush" />
@@ -153,8 +154,9 @@
     <!-- Tab strip -->
     <Border Grid.Row="0" Background="#1e1e1e" Padding="8,6,8,0">
       <DockPanel LastChildFill="True">
-        <TextBlock DockPanel.Dock="Left" Text="📝" FontSize="14"
-                   VerticalAlignment="Center" Margin="2,0,8,4" Foreground="#7fb3e8" />
+        <Image DockPanel.Dock="Left" Source="/notepad.png"
+               Width="18" Height="18" Margin="4,0,8,4"
+               VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
 
         <Button x:Name="AddTabButton" DockPanel.Dock="Right" Content="+"
                 Width="28" Height="28" Margin="6,0,0,4"

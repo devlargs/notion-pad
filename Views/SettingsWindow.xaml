@@ -5,6 +5,7 @@
         Width="480" SizeToContent="Height"
         ResizeMode="NoResize"
         Background="{StaticResource PanelBrush}"
+        Icon="/notepad.png"
         WindowStartupLocation="CenterOwner">
   <Grid Margin="22">
     <Grid.RowDefinitions>
